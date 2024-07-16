@@ -59,21 +59,46 @@ guess_number = on_command(
 
 
 @guess_number.handle()
-async def handle():
+async def handle(macher: Matcher):
     guess_number = random.randint(1, 100)
+    macher.set_arg("answer", guess_number)
+    macher.set_arg("times", 0)
+    print(f'答案是：{guess_number}')
     await Text("我们来玩猜数字游戏吧！").send()
     await asyncio.sleep(0.75)
-    await Text("请输入一个 1-100 之间的整数：").send()
 
 
-# @guess_number.got("number"  , prompt="请输入一个 1-100 之间的整数：")
-# async def got_number(number : str = )
+@guess_number.got("number", prompt="请输入一个 1-100 之间的整数：")
+async def got_number(macher: Matcher, number: str = ArgPlainText()):
+    answer = macher.get_arg("answer")
+    times = macher.get_arg("times")
+    times += 1
+    print(f'当前次数为：{times}')
+    macher.set_arg("times", times)
+    if not number.isdigit():
+        await guess_number.reject("请输入一个整数！")
+    number = int(number)
+    if number < answer:
+        await guess_number.reject("猜小了！")
+    elif number > answer:
+        await guess_number.reject("猜大了！")
+    else:
+        await Text("猜对了！").send()
 
+@guess_number.handle()
+async def handle(macher: Matcher):
+    times = macher.get_arg("times")
+    reply = ""
+    if times <= 3:
+        reply = f"{times}次？ 是不是开了？"
+    elif times >= 7:
+        reply = f"太下饭了吧你，{times}次啊"
+    else:
+        reply = f"还行，{times}次"
+    await guess_number.finish(reply)
 
+weather = on_command("tq", priority=5, block=True)
 
-weather = on_command(
-    "tq",priority=5, block=True
-)
 
 @weather.handle()
 async def handle_function(matcher: Matcher, args: Message = CommandArg()):
@@ -87,7 +112,6 @@ async def got_location(location: str = ArgPlainText()):
     await weather.send(f"今天{location}的天气是...")
 
 
-    
 @weather.got("location1", prompt="请输入地名5gfdsgsdfg")
 async def got_location(location: str = ArgPlainText()):
     await weather.send(f"今天{location}的天气是...")
