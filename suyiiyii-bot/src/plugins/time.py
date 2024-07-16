@@ -9,12 +9,15 @@ from nonebot.params import CommandArg
 require("nonebot_plugin_saa")
 from nonebot_plugin_saa import Text
 
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler
 
 check_time = on_command(
     "time", rule=to_me, aliases={"t", "时间", "几点了"}, priority=5, block=True
 )
 
 
+@scheduler.scheduled_job("cron", second="0", id="xxx")
 async def send_private():
     from nonebot_plugin_saa import TargetQQPrivate
 
