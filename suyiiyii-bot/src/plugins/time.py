@@ -2,6 +2,10 @@ import time
 from nonebot import require, on_command, get_bot
 from nonebot.rule import to_me
 from nonebot.adapters import Message, MessageSegment
+from nonebot import get_plugin_config
+from .config import Config
+
+plugin_config = get_plugin_config(Config)
 
 # from nonebot.adapters.console import Message, MessageSegment
 from nonebot.params import CommandArg
@@ -21,7 +25,7 @@ check_time = on_command(
 async def send_private():
     from nonebot_plugin_saa import TargetQQPrivate
 
-    target = TargetQQPrivate(user_id=1462845368)
+    target = TargetQQPrivate(user_id=plugin_config.time_user_id)
     await Text("博士，你今天有早八，还不能休息哦").send_to(target, get_bot())
 
 
