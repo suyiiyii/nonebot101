@@ -85,17 +85,19 @@ async def got_number(macher: Matcher, number: str = ArgPlainText()):
     else:
         await Text("猜对了！").send()
 
+
 @guess_number.handle()
 async def handle(macher: Matcher):
     times = macher.get_arg("times")
     reply = ""
     if times <= 3:
-        reply = f"{times}次？ 是不是开了？"
+        reply = f"{times}次？是不是开了？"
     elif times >= 7:
         reply = f"太下饭了吧你，{times}次啊"
     else:
         reply = f"还行，{times}次"
     await guess_number.finish(reply)
+
 
 weather = on_command("tq", priority=5, block=True)
 
@@ -104,7 +106,7 @@ weather = on_command("tq", priority=5, block=True)
 async def handle_function(matcher: Matcher, args: Message = CommandArg()):
     if args.extract_plain_text():
         matcher.set_arg("location", args)
-    await weather.send("请输入地名213123")
+    await weather.send("请输入地名 213123")
 
 
 @weather.got("location", prompt="请输入地名")
@@ -112,6 +114,6 @@ async def got_location(location: str = ArgPlainText()):
     await weather.send(f"今天{location}的天气是...")
 
 
-@weather.got("location1", prompt="请输入地名5gfdsgsdfg")
+@weather.got("location1", prompt="请输入地名 5gfdsgsdfg")
 async def got_location(location: str = ArgPlainText()):
     await weather.send(f"今天{location}的天气是...")
