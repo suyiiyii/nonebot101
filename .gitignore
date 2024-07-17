@@ -1,2 +1,4 @@
 .venv/
 suyiiyii-bot/.env.dev
+suyiiyii-bot/.env.prod
+/.idea/*
