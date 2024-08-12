@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "nonebot101"
+version = "0.1.0"
+description = ""
+authors = ["suyiiyii <suyiiyii@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+nonebot = "^1.9.1"
+nonebot2 = {extras = ["fastapi"], version = "^2.3.2"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.nonebot]
+adapters = [
+    { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" },
+]
+plugins = ["nonebot_plugin_saa", "nonebot_plugin_status", "nonebot_plugin_apscheduler"]
+plugin_dirs = ["src/plugins"]
+builtin_plugins = ["echo"]
