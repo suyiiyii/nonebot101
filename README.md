@@ -116,3 +116,75 @@ graph TD
 
 同时，把调度也做成接口，提供几个默认的调度策略。
 
+# Bison 加载流程
+* bison/__init__
+  * 导入 post, send, theme, types, utils, config, platform
+  * 导入 bootstrap
+    * 注册数据库迁移脚本
+  * 导入 admin_page
+    * 向 fastapi 注册 route
+  * 导入 sub_manager
+    * 向 nonebot 注册 Matcher
+
+# Bison 运行流程
+* bootstrap.pre 数据库迁移
+  * config_legacy 加载旧的配置文件
+  * data_migrate 数据迁移
+* init_scheduler 初始化调度器
+  * db_config.get_platform_target 获取平台信息
+  * scheduler.__init__ 调度器初始化
+    * 初始化各个平台
+
+* 调度循环
+  * exec_fetch 抓取任务
+  * get_next_schedulable 根据权重，获取下一个可执行的任务
+  * 如果获取到任务
+    * platform.do_fetch_new_post 
+      * platform.catch_network_error 网络错误的 utils
+        * platform.fetch_new_post 抓取并去重
+          * weibo.get_sub_list ~~获取订阅列表~~获取当前 target 的所有内容
+          * weibo._handle_new_post 
+            * NewMessage.filter_common_with_diff 使用内部缓存的 post 进行去重
+            * 如果有新内容：dispatch_user_post
+
+
+
+
+# 发消息流程
+* exec_fetch
+  * ...
+    * dispatch_user_post: 根据消息类型和用户的订阅类型，计算要给哪一些用户发消息
+      * do_parse -> parse: Platform 内部逻辑，把 RawPost 转换成 Post
+  * send_post.generate_messages()
+    * self.generate()
+      * get_priority_themes: theme
+        * theme.do_render() -> render(): theme把 Post 转换成 MessageSegmentFactory
+    * message_segments_process, message_process: 对MessageSegmentFactory做一些处理
+    * send_msgs(): 使用saa发送MessageSegmentFactory
+
+
+# 几个理解
+* 存在「Target 集合」和「userinfo 集合」，两者职责上面分离，前者只负责抓取，抓下来了之后，再由后者判断要给哪一些 user 推送
+* 每个站点有自己的scheduler、ProcessContext、ClientManager等，站点之间互相独立，互不干扰。但是共用推送的渠道（bot）
+
+# 全局工具类
+* DBConfig: 数据库相关，增删差改订阅信息的接口
+* ProcessContext: 获取 AsyncClient 的统一入口，返回 hook 过的 AsyncClient
+* ClientManager:  AsyncClientFactory，~~（怎么有这么多获取Client的方法，看不出来有什么区别😵‍💫）~~
+* Site: 调度器直接调度的对象？ ~~（和Platform有什么区别😵‍💫😵‍💫😵‍💫）~~
+* PlugConfig: 在nonebot框架下，插件的配置信息类
+* send.py: 所有MessageFactory的归宿，全局推送限流
+
+
+
+
+
+
+
+
+
+
+
+
+
+
