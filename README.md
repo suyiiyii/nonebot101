@@ -176,15 +176,54 @@ graph TD
 * send.py: 所有MessageFactory的归宿，全局推送限流
 
 
+# 当前实现分析与改进想法
+
+## 当前的主要抓取逻辑
+```mermaid
+graph LR
+    A["Scheduler"] --> B["fetch_new_post()"]
+    B --> C["get_sub_list()\n抓取当前内容"]
+    B --> D["_handle_new_post()"]
+    D --> E["filter_common_with_diff()\n去重"]
+    D --> F["dispatch_user_post()\n计算要给哪些用户推送"]
+    F --> G["do_parse()\n使用Theme渲染"]
+    
+```
+
+## 加入Cookie
+先不考虑当前实现如何引入的问题，单独考虑对抓取逻辑的影响。
+
+### 风控策略
+首先，先预设平台可能的风控策略：
+* 请求速率限制（对ip，对用户），可能有分级
+* UA/Cookie 等基本参数校验
+* 行为分析，比如是否高频访问同一个页面
+
+### 策略分析 & 调度目标
+* 对于 UA/Cookie 和行为分析，这里不考虑，因为我们的目标是尽量不触发风控，所以我们假设我们的 cookie 是合法的，我们的行为是合法的。
+* 请求速率限制：对于ip的限制，由于项目当前没有使用多ip的能力，这里不考虑ip的问题。对于用户的限制，我们可以朴素地认为，对于每个用户，当请求速率超过一定阈值时，才会被风控。所以，我们的目标是，在平台速率的限制下，尽量高频率地抓取信息。
 
 
+### 构想的一种实现方式
+主要思路：将 cookie 选择和 Target 调度整合在 Scheduler 中，Scheduler 基于当前的 Target 和 cookie 集合的状态，选择最合适的cookie进行请求，类似于状态机。请求后更新cookie的状态。请求得到的 RawPost 递交 ConveyorManager，由后续步骤处理。
+```mermaid
+graph 
+    A["1️⃣Scheduler\n选取订阅目标和cookie"] -->|status| B["2️⃣CookieStore\n保存cookie和附属状态"]
+    B -->|Cookie| A
+    A <-->|Cookie| C["3️⃣refresher\n需要的时候刷新cookie"]
+    A -->|Client, Target| D["4️⃣fetcher\n抓取内容"]
+    D -->|RawPost|A
+    A -->|RawPost| E["5️⃣CoveryorManager\n提交RawPost"]
+    
 
+```
 
+# CoveryorManager
+* 单例模式
+* 对外暴露一个方法：提交 Parcel 到队列
+* 一个装饰器，用于注册 Parcel 的处理函数
+* 内部一条队列，用 Memory object streams 实现
 
-
-
-
-
-
+被毙了，瘫
 
 
