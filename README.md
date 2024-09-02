@@ -204,7 +204,7 @@ graph LR
 * 请求速率限制：对于ip的限制，由于项目当前没有使用多ip的能力，这里不考虑ip的问题。对于用户的限制，我们可以朴素地认为，对于每个用户，当请求速率超过一定阈值时，才会被风控。所以，我们的目标是，在平台速率的限制下，尽量高频率地抓取信息。
 
 
-### 构想的一种实现方式
+### 构想的一种实现思路
 主要思路：将 cookie 选择和 Target 调度整合在 Scheduler 中，Scheduler 基于当前的 Target 和 cookie 集合的状态，选择最合适的cookie进行请求，类似于状态机。请求后更新cookie的状态。请求得到的 RawPost 递交 ConveyorManager，由后续步骤处理。
 ```mermaid
 graph 
@@ -217,6 +217,33 @@ graph
     
 
 ```
+## 引入的新组件
+* CookieStore: 保存 cookie 和 cookie 的状态。
+* CookieScheduler: 选择最合适的 cookie。
+
+
+
+### 一种简单的做法
+修改 ClientManager，内部添加对添加对 CookieStore 和 CookieScheduler 的引用。修改原先的 get_client(Target)方法，方法内部通过 CookieScheduler 和 CookieStore 选择最合适的 cookie，装载到 Client 中并返回。
+```mermaid
+zenuml
+    ClientManager
+    CookieScheduler
+    CookieStore
+    
+    ClientManager.get_client(Target){
+        cookie = CookieScheduler.get_cookie(Target,CookieStore){
+            cookies = CookieStore.get_cookies(Target)
+        }
+        return Client
+    }
+```
+
+优点：简单，不需要修改原有的调度逻辑，侵入性小。
+
+缺点：本质上是先选定 Target，再选择 Cookie，这样的话，可能难以得到全局最优解。
+
+
 
 # CoveryorManager
 * 单例模式
